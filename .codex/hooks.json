@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .agents/skills/quality-ratchet/scripts/quality-delta.mjs hook --agent-os-hook=quality-ratchet",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .agents/skills/quality-ratchet/scripts/guards.mjs hook --agent-os-hook=guards",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|apply_patch|shell|exec_command|local_shell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .agents/skills/quality-ratchet/scripts/guards.mjs hook --agent-os-hook=guards",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "package": "@sockulags/agent-os",
+  "version": "0.17.0",
+  "platform": "codex",
+  "scope": "project",
+  "skills": [
+    "batch-work",
+    "capture-intent",
+    "check-work",
+    "deliver-work",
+    "design-work",
+    "diagnose-before-fix",
+    "dispatch-next",
+    "explain-work",
+    "init-agent-os",
+    "list-skills",
+    "plain-voice",
+    "plan-work",
+    "proportional-testing",
+    "quality-ratchet",
+    "record-lesson",
+    "scope-guard",
+    "shape-work",
+    "simplify",
+    "verify-before-done"
+  ],
+  "packages": [
+    "agent-os-core",
+    "agent-os-dev"
+  ],
+  "integrations": {
+    "hooks": {
+      "configPath": "/home/user/vcui/.codex/hooks.json",
+      "event": "Stop",
+      "marker": "--agent-os-hook=quality-ratchet",
+      "guards": {
+        "events": [
+          "SessionStart",
+          "PreToolUse"
+        ],
+        "marker": "--agent-os-hook=guards"
+      }
+    }
+  }
+}

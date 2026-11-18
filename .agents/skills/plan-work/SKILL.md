@@ -1,0 +1,151 @@
+---
+name: plan-work
+description: Plans a coherent mission from outcome through coverage, decisions, feasibility, and verification with adaptive depth, and writes the result as a versioned spec beside an initiative's intent, or as a contract a tracker issue can carry. User-invoked when the developer wants a plan or a spec, or the work needs one. Not required for an already clear implementation request or a substitute for shape-work delivery structure.
+disable-model-invocation: true
+---
+
+# Plan work
+
+Own the coherent mission before delivery: the desired result and behavior, boundaries, affected
+parts, material decisions, technical feasibility, and one verification story for the whole result.
+Planning is an entry point, not a mandatory ceremony before an already clear implementation
+request. Shape-work may also start from an existing specification.
+
+## Choose planning depth internally
+
+Do not ask the developer to select a mode. Match the depth to scope and uncertainty separately:
+
+- A small, clear fix needs its outcome, boundaries, and verification, and no spec file.
+- Work that is not an initiative needs no spec file, whatever its size. Its settled contract
+  goes into the tracker issues that `shape-work` writes, or straight into delivery when one pull
+  request is enough.
+- A large but known change needs repository inspection and a coverage check across the relevant
+  flows, states, errors, integrations, and the screens each role sees.
+- A bounded open choice needs discoverable facts first, then only focused questions for choices
+  that materially change behavior.
+- A broad initiative uses the decision map below when questions need independent ownership,
+  separate evidence work, or parallel treatment.
+
+Use [capture-intent](../capture-intent/SKILL.md) when the outcome is still moving or cannot be
+stated, or when an initiative has no intent yet. An initiative is work that several pull requests
+deliver and whose product decisions someone other than the requester must agree to. Use [explain-work](../explain-work/SKILL.md)
+for the plain-language summary at the top of the spec and whenever an actual decision needs one. A
+summary is not a general approval gate: existing authority continues across workflow boundaries,
+and planning alone never starts implementation.
+
+## Establish the plan
+
+Read project policy, the request, the intent, relevant repository code, existing specs and plans,
+and live worktree or tracker state before asking questions. Check the real main flows, states,
+error paths, and integrations. For a rebuild or migration, identify what is preserved, replaced,
+migrated, and removed. Do not invent requirements to fill a template.
+
+Resolve repository facts yourself. Ask only a material product question, with a recommendation and
+the consequence of choosing differently. Record decisions, reasons, rejected alternatives, open
+risks, and evidence in the spec, or on the planning surface the project policy names instead.
+
+The plan owns one coherent mission, not a pile of disconnected tickets. The plan is ready when delivery
+can proceed without inventing material product intent. The ready result may be:
+
+- ready for direct delivery when the mission already has a sufficient contract;
+- ready for `shape-work` when delivery units, dependencies, or an epic contract still need to be
+  materialized; or
+- one explicit remaining question or evidence gap.
+
+Exact code, a complete file list, and every technical work step do not need to be decided. A plan
+does not authorize product implementation, and an issue becoming ready does not authorize it.
+
+## Settle the interface
+
+Design is part of the plan, not something delivery invents by accident. When the plan writes a
+spec, list every new or changed screen or state in its `## Interface` section, per role that sees
+it, or write `None` when nothing a person sees or does changes. A small, clear fix needs no spec;
+its request is its interface decision. A plan whose interface changes is ready when each listed
+surface is decided, left to delivery by the developer's choice, or explicitly deferred with an
+owner. An undecided surface is an open question, not a detail for delivery to fill in.
+
+Sketching is the developer's choice and never a required step. They may sketch before any spec
+exists to find out what they are trying to solve, before delivery to settle a screen, after delivery
+to reconsider one that was left to it, or not at all. When agent-os-dev is installed and a surface
+is still open, recommend `design-work` in one line with the reason and ask once whether to sketch
+now, after the screen is built, or not at all; a `When` entry in the policy's `## Design` section
+answers this without asking. On "now", continue into `design-work` and return here when it is done.
+Otherwise ask the developer for each open decision and record the answer they state, or record the
+surface as `Left to delivery:` with what delivery may decide when they say so; never guess a
+layout. Start from sketches the developer already made. A developer who explicitly hands those
+decisions to you for this run is the exception: decide, record each as `Decided: (delegated)` with
+its reason, and list them in the review for the developer to overturn.
+
+## Write the spec
+
+Write a spec file only when the work has an intent, or when the person or the project policy asks
+for one. Otherwise report the settled contract, with its behavior, interface decisions, boundaries,
+and ground truth, in the form a tracker issue can carry, and recommend `shape-work` or
+`deliver-work` as the next action. When the work has an intent, write `spec.md` in the same
+`intents/<id>/` folder from
+[references/spec-template.md](references/spec-template.md). Its `built_on` names the intent revision
+it answers, such as `intent@2`. Acceptance examples originate in the spec. A delivery unit written
+by `shape-work` states the ones it is accountable for and cites the spec section; the spec stays the
+authority.
+
+A new spec has `rev: 1` and `status: accepted`; merging its review is the acceptance. Commit it and
+open the review only when the request or the project's delivery defaults include that. Never merge
+the review yourself.
+
+A spec whose `built_on` revision is older than its intent is stale. Reconsider it before anything
+is shaped or delivered from it: confirm it still holds and update `built_on`, or change it.
+
+### Reconsideration
+
+Treat reconsideration as explicit planning information, not as an erased resolution:
+
+1. Preserve the earlier resolution and keep it addressable: an accepted spec changes only through a
+   new review that increases `rev` and adds a line to its `## Decision log`.
+2. Record which decision is under review, why it is being reconsidered, and the question that
+   remains open.
+3. Show the active reconsideration in the map and process it with the ordinary claim and frontier
+   rules.
+4. When it closes, record whether the earlier decision was confirmed or replaced. Register a
+   replacement only after a new decision is actually made.
+
+A changed spec makes every plan built on the earlier revision stale; name them so `shape-work` can
+reconcile them. Find potentially affected work through decision links, acceptance, and boundaries.
+Pause only branches with demonstrated impact; independent authorized work continues.
+
+## Decision-map mode
+
+When the broad depth is justified, read [references/map.md](references/map.md) and
+[references/elicitation.md](references/elicitation.md). Preserve these mechanics:
+
+- the decision ticket is canonical; the map is a repairable, low-resolution index;
+- ticket identity is stable and updates are idempotent;
+- claim an open frontier ticket before independent work, and never infer parallel workers from a
+  map with parallel possibilities;
+- connect real dependencies and expose the open, unblocked frontier;
+- re-read live state before writing and use compare-and-swap or the planning surface's equivalent
+  to protect concurrent updates;
+- hand off each bounded branch to `shape-work` through one stable, canonical handoff; shaping
+  reconciles issues and readiness back into the plan.
+
+The handoff links the canonical plan and ticket evidence. It carries a bounded summary, settled
+decisions, evidence, and remaining questions; it does not copy the plan into a competing
+specification. Use existing tracker status plus explicit reconsideration fields rather than
+inventing a global status machine.
+
+## Authority and tracker boundaries
+
+No planning skill grants external write access. If the request or the project policy's
+`## Tracker mandate` already authorizes tracker maintenance, that may include implementation detail
+and technical ordering or readiness within the authorized set. It does not silently change
+acceptance, ownership, delivery scope, or closure. Without tracker authority, keep corrections local
+and report the unsynced updates. If the information must survive the session, add a
+`Pending tracker updates` section to the spec only when needed; store a delta, not a copy of this
+plan.
+
+Recommend one concrete next action at exit, with the reason it wins and any blocker, and end with
+the route line. When the route's next step is `shape-work` and agent-os-dev is installed, follow the
+person's `Next step:` preference, which by default asks once whether to create the issues now; on
+yes, or with `continue`, go on into `shape-work` with the settled contract, so the decisions reach
+the tracker before the session ends. Continue into an authorized next workflow
+without adding an approval ceremony; stop when the plan is ready and the request does not include
+implementation.
