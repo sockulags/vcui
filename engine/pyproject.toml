@@ -1,0 +1,39 @@
+[project]
+name = "vcui-engine"
+version = "0.1.0"
+description = "Voice engine for vcui: microphone, KB-Whisper speech recognition and the Claude agent loop"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "anthropic>=2.10,<3",
+  "websockets>=15,<18",
+  "numpy>=1.26",
+  "sounddevice>=0.5",
+  "faster-whisper>=1.1.0",
+  # Same pins as referat's transcription server: huggingface-hub 2.x swaps its
+  # HTTP stack, and faster-whisper 1.2.1 calls av.open(..., metadata_errors=...),
+  # which av 19 removed.
+  "huggingface-hub<2",
+  "av<19",
+]
+
+[project.optional-dependencies]
+# Wake-word listening. Optional because it adds onnxruntime and model downloads.
+wake = ["openwakeword>=0.6"]
+
+[project.scripts]
+vcui-engine = "vcui_engine.server:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.24"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vcui_engine"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

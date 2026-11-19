@@ -1,0 +1,9 @@
+node_modules/
+dist/
+engine/.venv/
+engine/**/__pycache__/
+engine/.pytest_cache/
+src-tauri/target/
+src-tauri/gen/
+*.log
+.DS_Store
