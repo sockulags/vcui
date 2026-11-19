@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -75,12 +75,30 @@ jobs:
           if ($engine.HasExited) { throw "The packaged engine exited early" }
           if (-not (Select-String -Path engine-smoke.log -Pattern "engine listening")) { throw "The packaged engine did not start its server" }
           Stop-Process -Id $engine.Id
+      # Update packages are signed with TAURI_SIGNING_PRIVATE_KEY. Without the
+      # secret the installer is still built, without update packages.
+      - name: Choose build options
+        id: options
+        shell: bash
+        env:
+          HAS_UPDATER_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        run: |
+          args="--config src-tauri/tauri.release.conf.json --bundles nsis"
+          if [ "$HAS_UPDATER_KEY" = "true" ]; then
+            args="$args --config src-tauri/tauri.updater.conf.json"
+          else
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY is not set: no signed update packages in this build."
+          fi
+          echo "args=$args" >> "$GITHUB_OUTPUT"
       - name: Build the installer
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          args: --config src-tauri/tauri.release.conf.json --bundles nsis
+          args: ${{ steps.options.outputs.args }}
+          includeUpdaterJson: true
           tagName: ${{ (github.ref == 'refs/heads/main' || inputs.release == 'draft') && 'v__VERSION__' || '' }}
           releaseName: vcui v__VERSION__
           releaseBody: |

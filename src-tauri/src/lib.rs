@@ -26,6 +26,13 @@ fn engine_config(engine: tauri::State<'_, Engine>) -> EngineConfig {
     engine.config.clone()
 }
 
+/// Called before an update installs: the installer replaces the engine's files,
+/// which Windows keeps locked while the engine runs.
+#[tauri::command]
+fn stop_engine(app: tauri::AppHandle) {
+    stop_engine_process(&app);
+}
+
 fn free_port() -> u16 {
     TcpListener::bind("127.0.0.1:0")
         .and_then(|listener| listener.local_addr())
@@ -104,7 +111,7 @@ fn start_engine(app: &tauri::App, port: u16, token: &str) -> Option<Child> {
     }
 }
 
-fn stop_engine(app: &tauri::AppHandle) {
+fn stop_engine_process(app: &tauri::AppHandle) {
     if let Some(engine) = app.try_state::<Engine>() {
         if let Some(mut child) = engine.child.lock().ok().and_then(|mut guard| guard.take()) {
             let _ = child.kill();
@@ -120,6 +127,8 @@ pub fn run() {
     let shortcut = if cfg!(target_os = "macos") { toggle } else { toggle_other };
 
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, pressed, event| {
@@ -143,13 +152,13 @@ pub fn run() {
             });
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![engine_config])
+        .invoke_handler(tauri::generate_handler![engine_config, stop_engine])
         .build(tauri::generate_context!())
         .expect("error while building vcui");
 
     app.run(|app, event| {
         if let RunEvent::Exit = event {
-            stop_engine(app);
+            stop_engine_process(app);
         }
     });
 }

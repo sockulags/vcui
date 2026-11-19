@@ -161,6 +161,37 @@ p {
   font-size: 13px;
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.update-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid color-mix(in oklab, var(--accent) 55%, var(--border));
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 560;
+  cursor: pointer;
+}
+
+.update-pill[data-failed] {
+  border-color: color-mix(in oklab, var(--danger) 50%, var(--border));
+  background: color-mix(in oklab, var(--danger) 10%, transparent);
+  cursor: default;
+}
+
+.spin {
+  animation: spin 1.2s linear infinite;
+}
+
 .engine-pill {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
 {
   "name": "vcui",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Voice controlled UI: KB-Whisper, Claude Haiku and the UI SDK agent bridge in a Tauri app",
   "scripts": {
@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.5",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.14.1",
     "@ui-sdk/core": "0.1.0-beta.10",
     "@ui-sdk/react": "0.1.0-beta.10",
     "lucide-react": "^1.75.0",

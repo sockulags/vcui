@@ -1,6 +1,7 @@
 import { AudioLines } from "lucide-react"
 import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 import { Board } from "./components/Board"
+import { UpdateBanner } from "./components/UpdateBanner"
 import { VoicePanel } from "./components/VoicePanel"
 import { loadTodos, reducer, saveTodos, type Todo } from "./todos"
 import { useVoice } from "./voice/useVoice"
@@ -44,13 +45,16 @@ export function App() {
           <span className="brand-name">vcui</span>
           <span className="brand-sub">röststyrd att göra-lista</span>
         </div>
-        <div className="engine-pill" data-ok={voice.state.connected && voice.state.stt === "ready" ? "true" : "false"}>
-          <span className="dot" />
-          {voice.state.connected
-            ? `KB-Whisper ${voice.state.stt === "ready" ? `· ${voice.state.device ?? ""}` : "laddar"} · Haiku 5.5 ${
-                voice.state.agentBackend === "api" ? "via API-nyckel" : "via Claude-inloggning"
-              }`
-            : "Röstmotorn är inte ansluten"}
+        <div className="topbar-right">
+          <UpdateBanner />
+          <div className="engine-pill" data-ok={voice.state.connected && voice.state.stt === "ready" ? "true" : "false"}>
+            <span className="dot" />
+            {voice.state.connected
+              ? `KB-Whisper ${voice.state.stt === "ready" ? `· ${voice.state.device ?? ""}` : "laddar"} · Haiku 5.5 ${
+                  voice.state.agentBackend === "api" ? "via API-nyckel" : "via Claude-inloggning"
+                }`
+              : "Röstmotorn är inte ansluten"}
+          </div>
         </div>
       </header>
       <main className="layout">

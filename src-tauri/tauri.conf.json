@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "vcui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "se.sockulags.vcui",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -26,6 +26,23 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhGN0I4NTlDMThDREQyNjEKUldSaDBzMFluSVY3ajF4WFdSbUM1Z0o0L0VweTNPT2Q3SjRNVkM2QTRQdmtJcDN6b3dJR0R1U2wK",
+      "endpoints": [
+        "https://github.com/sockulags/vcui/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
