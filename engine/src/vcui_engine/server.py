@@ -68,6 +68,7 @@ class Engine:
             "stt": self.stt_status,
             "device": self.stt_device,
             "agent": "ready" if self.agent else "unavailable",
+            "agent_backend": getattr(self.agent, "backend", None),
             "agent_error": self.agent_error,
         }
 
@@ -125,6 +126,7 @@ class Engine:
         if self._connection is None:
             return False, "The app window is not connected."
         call_id = f"t{next(self._tool_ids)}"
+        log.info("tool %s %s", name, json.dumps(tool_input, ensure_ascii=False)[:400])
         waiter = asyncio.get_running_loop().create_future()
         self._tool_waiters[call_id] = waiter
         await self.emit({"type": "tool_call", "id": call_id, "name": name, "input": tool_input})
@@ -212,11 +214,16 @@ async def serve_engine(engine: Engine, host: str, port: int, token: str, allow_d
         await asyncio.gather(engine.listener.run(), engine.command_worker())
 
 
-def create_agent() -> tuple[Agent | None, str | None]:
+def create_agent(backend: str) -> tuple[Agent | None, str | None]:
+    """`sdk` runs on the computer's Claude Code login; `api` needs ANTHROPIC_API_KEY."""
     try:
-        return Agent(), None
+        if backend == "api":
+            return Agent(), None
+        from vcui_engine.agent_sdk import SdkAgent
+
+        return SdkAgent(), None  # type: ignore[return-value]
     except Exception as error:  # noqa: BLE001 - the window shows why
-        return None, f"Claude är inte konfigurerat: {error}"
+        return None, f"Claude är inte tillgängligt: {error}"
 
 
 async def load_speech(engine: Engine, model: str, device: str, wake_model: str | None) -> None:
@@ -252,7 +259,7 @@ async def amain(args: argparse.Namespace) -> None:
             log.exception("microphone failed")
             loop.create_task(engine.emit({"type": "error", "message": f"Mikrofonen gick inte att öppna: {error}"}))
 
-    agent, agent_error = create_agent()
+    agent, agent_error = create_agent(args.agent)
     holder: dict[str, Engine] = {}
 
     async def emit(message: dict) -> None:
@@ -279,6 +286,8 @@ def main() -> None:
     parser.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto")
     parser.add_argument("--wake-model", default=os.environ.get("VCUI_WAKE_MODEL", "hey_jarvis"),
                         help="openWakeWord model name or .onnx path; empty turns wake word off")
+    parser.add_argument("--agent", choices=["sdk", "api"], default=os.environ.get("VCUI_AGENT", "sdk"),
+                        help="sdk: the Claude Code login on this computer (default); api: ANTHROPIC_API_KEY")
     parser.add_argument("--input-device", default=None, help="sounddevice input device name or index")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")

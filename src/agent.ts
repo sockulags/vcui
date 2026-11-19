@@ -35,6 +35,20 @@ export const confirmStore = {
   },
 }
 
+/** Ask the person something from the app itself; `onAnswer` gets their answer once. */
+export function requestConfirm(text: string, onAnswer: (yes: boolean) => void) {
+  confirmStore.answer(false)
+  let settled = false
+  setPending({
+    text,
+    resolve: (yes) => {
+      if (settled) return
+      settled = true
+      onAnswer(yes)
+    },
+  })
+}
+
 const deniedListeners = new Set<() => void>()
 export const onConfirmDenied = (listener: () => void) => {
   deniedListeners.add(listener)
@@ -46,13 +60,19 @@ export const onConfirmDenied = (listener: () => void) => {
 function askPerson(text: string, signal: AbortSignal): Promise<boolean> {
   confirmStore.answer(false) // only one question at a time
   return new Promise((resolve) => {
+    let settled = false
     const done = (yes: boolean) => {
+      // The bridge aborts the signal when the step ends, after the answer too:
+      // only the first answer counts.
+      if (settled) return
+      settled = true
       if (!yes) deniedListeners.forEach((listener) => listener())
       resolve(yes)
     }
-    setPending({ text, resolve: done })
+    const entry: PendingConfirm = { text, resolve: done }
+    setPending(entry)
     signal.addEventListener("abort", () => {
-      if (pending?.text === text) setPending(null)
+      if (pending === entry) setPending(null)
       done(false)
     })
   })

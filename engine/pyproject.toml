@@ -14,6 +14,7 @@ dependencies = [
   # which av 19 removed.
   "huggingface-hub<2",
   "av<19",
+  "claude-agent-sdk>=0.2.184",
 ]
 
 [project.optional-dependencies]

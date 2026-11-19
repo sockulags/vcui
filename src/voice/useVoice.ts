@@ -64,7 +64,7 @@ export function useVoice({ onCommandStart, onUndo }: Options) {
     async (message: EngineMessage) => {
       switch (message.type) {
         case "status":
-          setState((s) => ({ ...s, stt: message.stt, device: message.device, agent: message.agent, agentError: message.agent_error }))
+          setState((s) => ({ ...s, stt: message.stt, device: message.device, agent: message.agent, agentError: message.agent_error, agentBackend: message.agent_backend ?? null }))
           break
         case "state":
           setState((s) => ({

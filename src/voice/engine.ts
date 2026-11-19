@@ -14,6 +14,7 @@ export interface EngineState {
   device: string | null
   agent: "ready" | "unavailable" | "unknown"
   agentError: string | null
+  agentBackend: "sdk" | "api" | null
   mode: "toggle" | "wake"
   open: boolean
   phase: Phase
@@ -27,6 +28,7 @@ export const initialEngineState: EngineState = {
   device: null,
   agent: "unknown",
   agentError: null,
+  agentBackend: null,
   mode: "toggle",
   open: false,
   phase: "off",
@@ -35,7 +37,7 @@ export const initialEngineState: EngineState = {
 }
 
 export type EngineMessage =
-  | { type: "status"; stt: EngineState["stt"]; device: string | null; agent: EngineState["agent"]; agent_error: string | null }
+  | { type: "status"; stt: EngineState["stt"]; device: string | null; agent: EngineState["agent"]; agent_error: string | null; agent_backend?: "sdk" | "api" | null }
   | { type: "state"; mode: EngineState["mode"]; open: boolean; phase: Phase; wake_available: boolean; wake_word: string | null }
   | { type: "level"; rms: number }
   | { type: "wake" }

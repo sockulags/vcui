@@ -47,7 +47,9 @@ export function App() {
         <div className="engine-pill" data-ok={voice.state.connected && voice.state.stt === "ready" ? "true" : "false"}>
           <span className="dot" />
           {voice.state.connected
-            ? `KB-Whisper ${voice.state.stt === "ready" ? `· ${voice.state.device ?? ""}` : "laddar"} · Haiku 5.5`
+            ? `KB-Whisper ${voice.state.stt === "ready" ? `· ${voice.state.device ?? ""}` : "laddar"} · Haiku 5.5 ${
+                voice.state.agentBackend === "api" ? "via API-nyckel" : "via Claude-inloggning"
+              }`
             : "Röstmotorn är inte ansluten"}
         </div>
       </header>

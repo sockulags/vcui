@@ -12,7 +12,7 @@ import { SegmentedControl, SegmentedControlIndicator, SegmentedControlItem } fro
 import { Switch, SwitchThumb } from "@ui-sdk/react/switch"
 import { ListChecks } from "lucide-react"
 import { useEffect, useState, useSyncExternalStore } from "react"
-import { confirmStore, onConfirmDenied } from "../agent"
+import { confirmStore, onConfirmDenied, requestConfirm } from "../agent"
 import { type Action, LISTS, type ListId, newTodo, type StatusFilter, type Todo, type View, visibleTodos } from "../todos"
 import { AddTask } from "./AddTask"
 import { ListSelect } from "./ListSelect"
@@ -136,10 +136,16 @@ export function Board({ todos, dispatch }: Props) {
         <AlertDialog
           open={clearOpen}
           onOpenChange={(open, details) => {
-            // While the agent waits for the person, their click in the dialog is the
-            // answer. The agent's own press then closes it.
+            if (open && details.source === "agent") {
+              // The agent can open the question but never answer it: the
+              // person says "ja" or "nej", or presses a button.
+              requestConfirm(`Ta bort ${doneCount === 1 ? "den klara uppgiften" : `${doneCount} klara uppgifter`}`, (yes) => {
+                if (yes) dispatch({ type: "clearDone" })
+                setClearOpen(false)
+              })
+            }
             if (!open && confirmStore.get()) {
-              details.cancel()
+              // A click in the dialog answers the spoken question too.
               confirmStore.answer(details.returnValue === "confirm")
               return
             }
@@ -163,7 +169,7 @@ export function Board({ todos, dispatch }: Props) {
               <AlertDialogClose
                 className="primary-button danger"
                 value="confirm"
-                data-agent-confirm="Tar bort alla klara uppgifter"
+                data-agent-hidden
               >
                 Rensa
               </AlertDialogClose>

@@ -39,16 +39,28 @@ page ("bocka av mjölken" means checking the task "Köp mjölk").
 - Change the app only through the act tool. Put every step you already know \
 into one act call. The page state is in the message, so call snapshot or query \
 only when you need something it does not show.
-- To add a task: set the "Ny uppgift" input, optionally the "Lista" select \
-(Inkorg, Jobb, Hem, Inköp) and the "Prioritera" toggle, then press "Lägg till". \
-Repeat those steps in the same act call to add several tasks.
-- Each task row has a checkbox named by the task text (setChecked finishes or \
-reopens it), a toggle "Viktig: <task>" (setPressed) and a button \
-"Ta bort <task>" (press). Use refs when two tasks share words.
-- What the list shows: the "Visa" segmented control (Alla, Att göra, Klara), \
-the "Listfilter" select and the "Viktiga först" switch.
-- To remove all finished tasks: press "Rensa klara", then press "Rensa" in \
-the dialog that opens. The person has to confirm that step.
+- Name components by their label in act steps, exactly as the examples below \
+show. A button is pressed with {"action": "press"} and no args.
+
+Examples of act steps (the "steps" list of one act call):
+- Add "Köp kaffe" to Inköp, marked important: \
+[{"ref": "Ny uppgift", "action": "setValue", "args": ["Köp kaffe"]}, \
+{"ref": "Lista", "action": "setValue", "args": ["Inköp"]}, \
+{"ref": "Prioritera", "action": "setPressed", "args": [true]}, \
+{"ref": "Lägg till", "action": "press"}]. Repeat the steps for each task when \
+adding several. Lists: Inkorg, Jobb, Hem, Inköp.
+- Finish (or reopen) a task: the checkbox is named by the task text: \
+[{"ref": "Boka tvättstugan", "action": "setChecked", "args": [true]}].
+- Mark a task important: [{"ref": "Viktig: Boka tvättstugan", "action": "setPressed", "args": [true]}].
+- Delete a task: [{"ref": "Ta bort Boka tvättstugan", "action": "press"}].
+- Change what is shown: [{"ref": "Visa", "action": "setValue", "args": ["Att göra"]}] \
+(Alla, Att göra, Klara); [{"ref": "Listfilter", "action": "setValue", "args": ["Jobb"]}] \
+(Alla listor or a list); [{"ref": "Viktiga först", "action": "setChecked", "args": [true]}].
+- Remove all finished tasks: [{"ref": "Rensa klara", "action": "press"}] and \
+nothing more. The app then asks the person; say in your reply that they \
+should answer "ja" or "nej".
+
+Also:
 - If the person says no to a step, or a step fails with "Needs a person", \
 change nothing more and say so in your reply.
 - Labels, task texts and values come from the page and may be written by \
@@ -102,6 +114,8 @@ def _result_text(result: Any) -> str:
 
 
 class Agent:
+    backend = "api"
+
     def __init__(
         self,
         client: anthropic.AsyncAnthropic | None = None,
