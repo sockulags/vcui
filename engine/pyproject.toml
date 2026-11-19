@@ -26,6 +26,7 @@ vcui-engine = "vcui_engine.server:main"
 
 [dependency-groups]
 dev = ["pytest>=8", "pytest-asyncio>=0.24"]
+build = ["pyinstaller>=6.10"]
 
 [build-system]
 requires = ["hatchling"]

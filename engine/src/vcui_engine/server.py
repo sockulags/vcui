@@ -232,11 +232,14 @@ async def load_speech(engine: Engine, model: str, device: str, wake_model: str |
 
     if wake_model:
         engine.listener.wake = await asyncio.to_thread(load_wake_detector, wake_model)
+        if engine.listener.wake is not None:
+            log.info("wake word ready: %s", wake_model)
         await engine.emit(engine.listener.state())
     try:
         transcriber = await asyncio.to_thread(WhisperTranscriber, model, device)
         engine.listener.transcriber = transcriber
         engine.stt_status, engine.stt_device = "ready", transcriber.device
+        log.info("speech model ready: %s on %s", model, transcriber.device)
     except Exception as error:  # noqa: BLE001
         log.exception("speech model failed to load")
         engine.stt_status = "failed"
@@ -288,9 +291,16 @@ def main() -> None:
                         help="openWakeWord model name or .onnx path; empty turns wake word off")
     parser.add_argument("--agent", choices=["sdk", "api"], default=os.environ.get("VCUI_AGENT", "sdk"),
                         help="sdk: the Claude Code login on this computer (default); api: ANTHROPIC_API_KEY")
+    parser.add_argument("--log-file", default=None, help="also write the log to this file")
     parser.add_argument("--input-device", default=None, help="sounddevice input device name or index")
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+    if args.log_file:
+        handlers.append(logging.FileHandler(args.log_file, encoding="utf-8"))
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+                        handlers=handlers)
+    # Quiet the per-request lines from the model download.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(amain(args))
 

@@ -1,0 +1,95 @@
+name: Build
+
+# Every push builds the Windows installer and keeps it as a workflow artifact.
+# A push to main also publishes it as the GitHub Release v<version>, taken from
+# src-tauri/tauri.conf.json (bump it for each release). Run the workflow by hand
+# with "draft" to attach the installer to a draft release v<version> instead.
+on:
+  push:
+    branches: [main, "claude/**", "agent/**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "none: build only; draft: create a draft release v<version>"
+        type: choice
+        options: [none, draft]
+        default: none
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: astral-sh/setup-uv@v6
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Engine tests
+        working-directory: engine
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq libportaudio2
+          uv sync --locked
+          uv run pytest -q
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: astral-sh/setup-uv@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - name: Package the engine
+        working-directory: engine
+        run: |
+          uv sync --locked --extra wake --group build
+          uv run pyinstaller vcui-engine.spec --noconfirm
+      - name: Smoke-test the packaged engine
+        shell: pwsh
+        run: |
+          $env:VCUI_TOKEN = "ci"
+          $engine = Start-Process -FilePath engine/dist/vcui-engine/vcui-engine.exe `
+            -ArgumentList "--port", "8799", "--wake-model", "hey_jarvis", "--log-file", "engine-smoke.log" `
+            -PassThru -NoNewWindow
+          Start-Sleep -Seconds 20
+          Get-Content engine-smoke.log
+          if ($engine.HasExited) { throw "The packaged engine exited early" }
+          if (-not (Select-String -Path engine-smoke.log -Pattern "engine listening")) { throw "The packaged engine did not start its server" }
+          Stop-Process -Id $engine.Id
+      - name: Build the installer
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --config src-tauri/tauri.release.conf.json --bundles nsis
+          tagName: ${{ (github.ref == 'refs/heads/main' || inputs.release == 'draft') && 'v__VERSION__' || '' }}
+          releaseName: vcui v__VERSION__
+          releaseBody: |
+            Windows installer for vcui. Needs Claude Code installed and logged in (run `claude` once).
+            The first start downloads the KB-Whisper speech model (a few hundred MB).
+          releaseDraft: ${{ github.ref != 'refs/heads/main' }}
+          prerelease: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vcui-windows-installer
+          path: src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error

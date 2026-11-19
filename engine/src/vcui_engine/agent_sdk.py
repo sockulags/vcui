@@ -15,8 +15,11 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import platform
 import shutil
 import tempfile
+from pathlib import Path
 from collections import deque
 from typing import Any
 
@@ -29,14 +32,34 @@ MAX_TURNS = 8
 
 
 def find_claude_cli() -> str | None:
-    """The Claude Code CLI the SDK will use: its bundled copy, or one on PATH."""
+    """The Claude Code CLI to run: the one installed on the computer, where the
+    person's login lives, or else the copy bundled with the SDK.
+
+    On Windows only a native claude.exe works; the SDK refuses npm's claude.cmd.
+    """
+    home = Path.home()
+    if platform.system() == "Windows":
+        for directory in os.environ.get("PATH", "").split(os.pathsep):
+            candidate = Path(directory) / "claude.exe"
+            if candidate.is_absolute() and candidate.is_file():
+                return str(candidate)
+        candidates = [home / ".local/bin/claude.exe", Path(os.environ.get("LOCALAPPDATA", "")) / "Programs/claude/claude.exe"]
+    else:
+        found = shutil.which("claude")
+        if found:
+            return found
+        candidates = [home / ".local/bin/claude", home / ".claude/local/claude", Path("/usr/local/bin/claude"),
+                      home / ".npm-global/bin/claude", Path("/opt/homebrew/bin/claude")]
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
     try:
         from claude_agent_sdk._internal.transport.subprocess_cli import SubprocessCLITransport
         from claude_agent_sdk.types import ClaudeAgentOptions
 
-        return SubprocessCLITransport(prompt="", options=ClaudeAgentOptions())._find_cli()
-    except Exception:  # noqa: BLE001 - fall back to a PATH lookup
-        return shutil.which("claude")
+        return SubprocessCLITransport(prompt="", options=ClaudeAgentOptions())._find_bundled_cli()
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _text(result: Any) -> str:
@@ -53,7 +76,9 @@ class SdkAgent:
         self.effort = effort
         self.cli_path = cli_path or find_claude_cli()
         if not self.cli_path:
-            raise RuntimeError("Claude Code hittades inte. Installera Claude Code och logga in med `claude`.")
+            raise RuntimeError(
+                "Claude Code hittades inte. Installera det (https://claude.ai/install) och logga in genom att köra `claude`."
+            )
         self.recent: deque[tuple[str, str]] = deque(maxlen=4)
         self._workdir = tempfile.mkdtemp(prefix="vcui-agent-")
 

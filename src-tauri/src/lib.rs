@@ -42,8 +42,8 @@ fn new_token() -> String {
 /// How to start the engine:
 /// - `VCUI_ENGINE_CMD`, when set, is run through the shell (any build);
 /// - a debug build runs the engine from the repository with uv;
-/// - a release build runs `vcui-engine` next to the app's executable.
-fn engine_command(port: u16) -> Command {
+/// - a release build runs the packaged engine from the app's resources.
+fn engine_command(app: &tauri::App, port: u16) -> Command {
     let port = port.to_string();
     if let Ok(custom) = std::env::var("VCUI_ENGINE_CMD") {
         let mut command = if cfg!(windows) {
@@ -69,17 +69,23 @@ fn engine_command(port: u16) -> Command {
         return command;
     }
     let name = if cfg!(windows) { "vcui-engine.exe" } else { "vcui-engine" };
-    let executable = std::env::current_exe()
-        .ok()
-        .and_then(|exe| exe.parent().map(|dir| dir.join(name)))
-        .unwrap_or_else(|| PathBuf::from(name));
+    let executable = app
+        .path()
+        .resource_dir()
+        .map(|dir| dir.join("engine").join(name))
+        .unwrap_or_else(|_| PathBuf::from(name));
     let mut command = Command::new(executable);
     command.args(["--port", &port]);
+    if let Ok(log_dir) = app.path().app_log_dir() {
+        if std::fs::create_dir_all(&log_dir).is_ok() {
+            command.arg("--log-file").arg(log_dir.join("engine.log"));
+        }
+    }
     command
 }
 
-fn start_engine(port: u16, token: &str) -> Option<Child> {
-    let mut command = engine_command(port);
+fn start_engine(app: &tauri::App, port: u16, token: &str) -> Option<Child> {
+    let mut command = engine_command(app, port);
     // The token goes in the environment, not on the command line, where other
     // processes on the computer could read it.
     command.env("VCUI_TOKEN", token);
@@ -130,7 +136,7 @@ pub fn run() {
             }
             let port = free_port();
             let token = new_token();
-            let child = start_engine(port, &token);
+            let child = start_engine(app, port, &token);
             app.manage(Engine {
                 config: EngineConfig { url: format!("ws://127.0.0.1:{port}"), token },
                 child: Mutex::new(child),
